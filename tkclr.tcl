@@ -1,3 +1,4 @@
+#! /usr/bin/env tclsh
 # clrpick.tcl --
 #
 #	Color selection dialog for platforms that do not support a
