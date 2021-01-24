@@ -278,7 +278,7 @@ proc ::tk::dialog::color::BuildDialog {w} {
 
     # for setting the mutual move of selectors:
     set ::tk::dialog::color::tonemoves 1
-    set ::tk::dialog::color::moveall 0
+    set ::tk::dialog::color::moveall [expr {[info exists ::tkcc_moveall]}]
     pack [ttk::checkbutton $stripsFrame.moveallColorSel -text [mc "Move all"] \
       -variable ::tk::dialog::color::moveall -command \
       "::tk::dialog::color::StickSelectors $w 1"] -padx 2 -side left
@@ -787,10 +787,14 @@ proc ::tk::dialog::color::CancelCmd {w} {
 #   tclsh tkclr.tcl dark red
 # Returns the selected color in clipboard and stdout."
 
-if {$::argc == 0} {
-  set initcolor #004000
-} else {
-  set initcolor "$::argv"
+set initcolor #004000
+if {$::argc} {
+  if {[string first "-moveall" $::argv]>=0} {
+    set ::tkcc_moveall 1
+    set ::argv [string map {"-moveall" ""} $::argv]
+    set ::argv [string trim $::argv]
+  }
+  if {$::argv ne ""} {set initcolor "$::argv"}
 }
 if {$::tcl_platform(platform) == "windows"} {
   wm attributes . -alpha 0.0

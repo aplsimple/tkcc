@@ -217,6 +217,9 @@ proc ::tk::dialog::color::BuildDialog {w} {
 
   upvar ::tk::dialog::color::[winfo name $w] data
 
+    # let the dialog's background = the app's
+    $w configure -background [ttk::style lookup "." -background]
+
     # TopFrame contains the color strips and the color selection
     #
     set topFrame [ttk::frame $w.top -relief flat]
