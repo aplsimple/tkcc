@@ -26,7 +26,9 @@ To use *clrpick.tcl*, copy it into the Tk directory (replacing the old version).
 
 A stand-alone Tk color chooser is invoked as:
 
- `tclsh tkclr.tcl ?-moveall? ?color?`
+ `tclsh tkclr.tcl ?color?`
+
+If the color argument is omitted, the chooser tries to take a color from the clipboard. Also, it provides two buttons allowing to get/put a color from/to the clipboard. Well fit when the chooser is 'topmost' above other windows.
 
 Specially for .ru community:
 
@@ -40,4 +42,3 @@ Specially for .ru community:
 
 Further details:
  https://aplsimple.github.io/en/tcl/tkcc
-
