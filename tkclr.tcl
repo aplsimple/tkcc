@@ -325,10 +325,15 @@ proc ::tk::dialog::color::BuildDialog {w} {
   ttk::button $botFrame.cancel -text [string map {& ""} [mc "Cancel"]] \
       -command [list tk::dialog::color::CancelCmd $w]
 
-  set data(okBtn)      $botFrame.ok
+  if {![catch {set clb [clipboard get]}] && \
+  [regexp {^(#*\d{3,6}|[[:alnum:] ]{3,})$} $clb]} {
+    set data(okBtn) $botFrame.ok0
+  } else {
+    set data(okBtn) $botFrame.ok
+  }
   set data(cancelBtn)  $botFrame.cancel
 
-  grid $botFrame.ok0 x x $botFrame.ok $botFrame.cancel -sticky ew
+  grid x x x $botFrame.ok0 $botFrame.ok $botFrame.cancel -sticky ew
   grid configure $botFrame.ok $botFrame.cancel -padx 2 -pady 4
   grid columnconfigure $botFrame 2 -weight 2 -uniform space
   pack $botFrame -side bottom -fill x
@@ -752,10 +757,13 @@ proc ::tk::dialog::color::LeaveColorBar {w color} {
 proc ::tk::dialog::color::OkCmd0 {w} {
   set mainentry ".[winfo name $w].top.sel.ent"
   # try #RGB and RGB
-  foreach c {"" "#"} {
-    $mainentry delete 0 end
-    $mainentry insert 0 "$c[clipboard get]"
-    tk::dialog::color::HandleSelEntry $w
+  catch {
+    set clb [clipboard get]
+    foreach c {"" "#"} {
+      $mainentry delete 0 end
+      $mainentry insert 0 "$c$clb"
+      tk::dialog::color::HandleSelEntry $w
+    }
   }
 }
 
