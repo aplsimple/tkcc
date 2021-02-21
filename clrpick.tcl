@@ -326,6 +326,8 @@ proc ::tk::dialog::color::BuildDialog {w} {
   #
   set botFrame [ttk::frame $w.bot -relief raised]
 
+  ttk::button $botFrame.ok0 -text [mc "From clipboard"] \
+      -command [list tk::dialog::color::OkCmd0 $w]
   ttk::button $botFrame.ok -text [string map {& ""} [mc "OK"]] \
       -command [list tk::dialog::color::OkCmd $w]
   ttk::button $botFrame.cancel -text [string map {& ""} [mc "Cancel"]] \
@@ -334,7 +336,7 @@ proc ::tk::dialog::color::BuildDialog {w} {
   set data(okBtn)      $botFrame.ok
   set data(cancelBtn)  $botFrame.cancel
 
-  grid x x x $botFrame.ok $botFrame.cancel -sticky ew
+  grid $botFrame.ok0 x x $botFrame.ok $botFrame.cancel -sticky ew
   grid configure $botFrame.ok $botFrame.cancel -padx 2 -pady 4
   grid columnconfigure $botFrame 2 -weight 2 -uniform space
   pack $botFrame -side bottom -fill x
@@ -751,6 +753,18 @@ proc ::tk::dialog::color::EnterColorBar {w color} {
 proc ::tk::dialog::color::LeaveColorBar {w color} {
   upvar ::tk::dialog::color::[winfo name $w] data
   $data($color,sel) itemconfigure $data($color,index) -fill black
+}
+
+# user hits "From clipboard" button
+#
+proc ::tk::dialog::color::OkCmd0 {w} {
+  set mainentry ".[winfo name $w].top.sel.ent"
+  # try #RGB and RGB
+  foreach c {"" "#"} {
+    $mainentry delete 0 end
+    $mainentry insert 0 "$c[clipboard get]"
+    tk::dialog::color::HandleSelEntry $w
+  }
 }
 
 # user hits OK button

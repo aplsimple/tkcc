@@ -10,6 +10,7 @@ namespace eval ::tk {}
 namespace eval ::tk::dialog {}
 namespace eval ::tk::dialog::color {
   namespace import ::tk::msgcat::*
+  variable colordlg __tk__color
 }
 
 # ::tk::dialog::color:: --
@@ -20,7 +21,8 @@ namespace eval ::tk::dialog::color {
 #
 proc ::tk::dialog::color:: {args} {
   variable ::tk::Priv
-  set dataName __tk__color
+  variable colordlg
+  set dataName $colordlg
   upvar ::tk::dialog::color::$dataName data
   set w .$dataName
 
@@ -745,30 +747,33 @@ proc ::tk::dialog::color::LeaveColorBar {w color} {
   $data($color,sel) itemconfigure $data($color,index) -fill black
 }
 
-# user hits OK button
+# user hits "From clipboard" button
 #
 proc ::tk::dialog::color::OkCmd0 {w} {
-    variable ::tk::Priv
-    upvar ::tk::dialog::color::[winfo name $w] data
-    set mainentry ".[winfo name $w].top.sel.ent"
+  set mainentry ".[winfo name $w].top.sel.ent"
+  # try #RGB and RGB
+  foreach c {"" "#"} {
     $mainentry delete 0 end
-    $mainentry insert 0 [clipboard get]
+    $mainentry insert 0 "$c[clipboard get]"
     tk::dialog::color::HandleSelEntry $w
+  }
 }
 
+# user hits "To clipboard" button
+#
+
 proc ::tk::dialog::color::OkCmd1 {w} {
-    variable ::tk::Priv
-    upvar ::tk::dialog::color::[winfo name $w] data
-    puts $data(finalColor)
-    clipboard clear
-    clipboard append -type STRING $data(finalColor)
+  upvar ::tk::dialog::color::[winfo name $w] data
+  puts $data(finalColor)
+  clipboard clear
+  clipboard append -type STRING $data(finalColor)
 }
 
 # user hits Cancel button or destroys window
 #
 proc ::tk::dialog::color::CancelCmd {w} {
-    variable ::tk::Priv
-    set Priv(selectColor) ""
+  variable ::tk::Priv
+  set Priv(selectColor) ""
 }
 
 ####################################################################
@@ -793,7 +798,13 @@ if {$::argc==1} {
   set initcolor black
   if {![catch {set ic [clipboard get]}]} {
     set _ [. cget -background]
-    if {![catch {. configure -background $ic}]} {set initcolor $ic}
+    if {[catch {. configure -background $ic}]} {set ic "#$ic"}
+    if {![catch {. configure -background $ic}]} {
+      set initcolor $ic
+      clipboard clear
+      clipboard append -type STRING $initcolor
+      after idle {event generate .$::tk::dialog::color::colordlg  <Return>}
+    }
     . configure -background $_
   }
 }
@@ -801,5 +812,5 @@ ttk::style theme use clam
 ::tk::dialog::color::  -parent . -title "Choose Color" -initialcolor $initcolor
 exit
 # ________________________________ EOF __________________________________ #
-# -ARGS1: \"#000000\"
-# -ARGS2: \"spring green\"
+# -ARGS1: "#000000"
+# -ARGS2: "spring green"
