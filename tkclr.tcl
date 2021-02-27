@@ -5,6 +5,11 @@
 
 package require Tk
 
+catch {
+  lappend auto_path [file join [file dirname [info script]] aloupe]
+  package require aloupe
+}
+
 # Make sure namespaces exist
 namespace eval ::tk {}
 namespace eval ::tk::dialog {}
@@ -12,6 +17,7 @@ namespace eval ::tk::dialog::color {
   namespace import ::tk::msgcat::*
   variable colordlg __tk__color
 }
+::msgcat::mcload [file join [file dirname [info script]] msgs]
 
 # ::tk::dialog::color:: --
 #
@@ -320,6 +326,10 @@ proc ::tk::dialog::color::BuildDialog {w} {
 
   ttk::button $botFrame.ok0 -text [mc "From clipboard"] \
       -command [list tk::dialog::color::OkCmd0 $w]
+  if {[set aloupe [info commands ::aloupe::run]] ne ""} {
+    ttk::button $botFrame.loupe -text [mc "Loupe"] \
+      -command [list after idle "tk::dialog::color::Loupe $w"]
+  }
   ttk::button $botFrame.ok -text [mc "To clipboard"] \
       -command [list tk::dialog::color::OkCmd1 $w]
   ttk::button $botFrame.cancel -text [string map {& ""} [mc "Cancel"]] \
@@ -333,7 +343,11 @@ proc ::tk::dialog::color::BuildDialog {w} {
   }
   set data(cancelBtn)  $botFrame.cancel
 
-  grid x x x $botFrame.ok0 $botFrame.ok $botFrame.cancel -sticky ew
+  if {$aloupe eq ""} {
+    grid $botFrame.ok0 x x x $botFrame.ok $botFrame.cancel -sticky ew
+  } else {
+    grid $botFrame.ok0 $botFrame.loupe x x x $botFrame.ok $botFrame.cancel -sticky ew
+  }
   grid configure $botFrame.ok $botFrame.cancel -padx 2 -pady 4
   grid columnconfigure $botFrame 2 -weight 2 -uniform space
   pack $botFrame -side bottom -fill x
@@ -752,6 +766,12 @@ proc ::tk::dialog::color::LeaveColorBar {w color} {
   $data($color,sel) itemconfigure $data($color,index) -fill black
 }
 
+# user hits "Loupe" button
+#
+proc ::tk::dialog::color::Loupe {w} {
+  ::aloupe::run -exit no -command "::tk::dialog::color::OkCmd0 $w" -ontop yes
+}
+
 # user hits "From clipboard" button
 #
 proc ::tk::dialog::color::OkCmd0 {w} {
@@ -817,6 +837,7 @@ if {$::argc==1} {
   }
 }
 ttk::style theme use clam
+ttk::style configure TButton -anchor center -width -8 -relief raised -borderwidth 1 -padding 1
 ::tk::dialog::color::  -parent . -title "Choose Color" -initialcolor $initcolor
 exit
 # ________________________________ EOF __________________________________ #

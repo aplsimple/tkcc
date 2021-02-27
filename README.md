@@ -22,6 +22,8 @@ The changes to *tk_chooseColor* are the following:
 
 8. A stand-alone Tk color chooser *tkclr.tcl* is available.
 
+9. A *aloupe* package may be called to pick a color from the screen loupe.
+
 To use *clrpick.tcl*, copy it into the Tk directory (replacing the old version).
 
 A stand-alone Tk color chooser is invoked as:
@@ -29,16 +31,6 @@ A stand-alone Tk color chooser is invoked as:
  `tclsh tkclr.tcl ?color?`
 
 If the color argument is omitted, the chooser tries to take a color from the clipboard. Also, it provides two buttons allowing to get/put a color from/to the clipboard. Well fit when the chooser is 'topmost' above other windows.
-
-Specially for .ru community:
-
-  * *ru.msg* is corrected ("Selection:" filled, "Move all" and "Tone Moves"
-   added);
-  * to use *ru.msg*, do either:
-     * use *kdiff3, meld* or similar to merge the new and the old *ru.msg* in
-       Tk/msgs directory (recommended);
-     * just copy *ru.msg* into *Tk/msgs* directory (replacing the old version).
-
 
 Further details:
  https://aplsimple.github.io/en/tcl/tkcc
