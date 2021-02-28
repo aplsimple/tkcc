@@ -19,7 +19,7 @@ package require treectrl
 package require Img
 ::msgcat::mcload [file join [file dirname [info script]] msgs]
 
-package provide aloupe 0.6
+package provide aloupe 0.7
 
 # _______________________________________________________________________ #
 
@@ -54,6 +54,16 @@ where 'option' may be -size, -zoom, -alpha, -background, -exit, -command, -ontop
 }
 # ______
 
+proc ::aloupe::my::Message {args} {
+  # Displays a message, with the loupe hidden.
+
+  variable data
+  wm withdraw $data(WLOUP)
+  tk_messageBox {*}$args
+  wm deiconify $data(WLOUP)
+}
+# ______
+
 proc ::aloupe::my::CreateDisplay {} {
   # Creates the displaying window.
 
@@ -61,25 +71,22 @@ proc ::aloupe::my::CreateDisplay {} {
   set data(IMSIZE) [expr {2*$data(-size)*$data(-zoom)}]
   set data(IMAGE) [image create photo -width $data(IMSIZE) -height $data(IMSIZE)]
   toplevel $data(WDISP)
-  wm title $data(WDISP) Loupe
+  wm title $data(WDISP) [::msgcat::mc Loupe]
   $data(WDISP) configure -background [ttk::style configure . -background]
-  set text1 [::msgcat::mc "Size"]
-  grid [ttk::label $data(WDISP).lab1 -text " $text1"] -row 0 -column 0 -sticky e
-  grid [ttk::spinbox $data(WDISP).sp1 -from 12 -to 256 -justify center \
-    -width 4 -textvariable ::aloupe::my::size] -row 0 -column 1 -sticky w
-  set text2 [::msgcat::mc "Zoom"]
-  grid [ttk::label $data(WDISP).lab2 -text " $text2"] -row 0 -column 2 -sticky e
+  grid [ttk::label $data(WDISP).lab1 -text " [::msgcat::mc Size]"] -row 0 -column 0 -sticky e
+  grid [ttk::spinbox $data(WDISP).sp1 -from 8 -to 256 -justify center \
+    -width 4 -textvariable ::aloupe::my::size -command ::aloupe::my::SizeLoupe] \
+    -row 0 -column 1 -sticky w
+  grid [ttk::label $data(WDISP).lab2 -text " [::msgcat::mc Zoom]"] -row 0 -column 2 -sticky e
   grid [ttk::spinbox $data(WDISP).sp2 -from 2 -to 32 -justify center \
     -width 2 -textvariable ::aloupe::my::zoom] -row 0 -column 3 -sticky w
   grid [ttk::separator $data(WDISP).sep1 -orient horizontal] -row 1 -columnspan 4 -sticky we -pady 2
   grid [ttk::label $data(LABEL) -image $data(IMAGE) -relief flat \
     -style [lindex [SetStyle TLabel no -bd 0] 1]] -row 2 -columnspan 4 -padx 2
-  set text1 [::msgcat::mc "Save"]
-  grid [ttk::button $data(WDISP).but1 -text $text1 \
+  grid [ttk::button $data(WDISP).but1 -text [::msgcat::mc Save] \
     -command ::aloupe::my::Save] -row 3 -column 0 -columnspan 2 -sticky ew
   set data(BUT2) $data(WDISP).but2
-  set text2 [::msgcat::mc "To clipboard"]
-  grid [ttk::button $data(BUT2) -text $text2 \
+  grid [ttk::button $data(BUT2) -text [::msgcat::mc "To clipboard"] \
     -command ::aloupe::my::Button2Click] -row 3 -column 2 -columnspan 2 -sticky ew
   set data(-geometry) [regexp -inline \\+.* $data(-geometry)]
   if {$data(-geometry) ne ""} {
@@ -104,15 +111,16 @@ proc ::aloupe::my::CreateDisplay {} {
 }
 # ______
 
-proc ::aloupe::my::CreateLoupe {} {
+proc ::aloupe::my::CreateLoupe {{geom ""}} {
   # Creates the loupe window.
+  #   geom - the predefined geometry
 
   variable data
   frame $data(WLOUP)
   wm manage $data(WLOUP)
+  wm withdraw $data(WLOUP)
   wm attributes $data(WLOUP) -topmost 1 -alpha $data(-alpha)
   wm overrideredirect $data(WLOUP) 1
-  wm withdraw $data(WLOUP)
   set canvas $data(WLOUP).c
   canvas $canvas -width 100 -height 100 -background $data(-background) \
     -relief flat -bd 0 -highlightthickness 2 -highlightbackground red
@@ -122,7 +130,7 @@ proc ::aloupe::my::CreateLoupe {} {
   bind $canvas <ButtonRelease-1> {::aloupe::my::DragEnd %W}
   bind $canvas <Escape>          {::aloupe::my::Exit}
   after 50 "
-    ::aloupe::my::InitGeometry
+    ::aloupe::my::InitGeometry $geom
     wm deiconify $data(WLOUP)
     "
 }
@@ -163,6 +171,9 @@ proc ::aloupe::my::DragStart {w X Y} {
   if {$data(PREVZOOM) != $data(-zoom) || $data(PREVSIZE) != $data(-size)} {
     SaveGeometry
     Create
+    catch {unset data(dragX)}  ;# no drag-n-drop, update the loupe only
+    update
+    return
   }
   set data(COLOR) [set data(CAPTURE) ""]
   StyleButton2 no {*}$data(BUTCFG)
@@ -182,11 +193,10 @@ proc ::aloupe::my::Drag {w X Y} {
   #   Y - Y-coordinate of the mouse pointer
 
   variable data
-  if {[info exists data(dragX)]} {
-    set dx [expr {$X - $data(dragX)}]
-    set dy [expr {$Y - $data(dragY)}]
-    wm geometry $data(WLOUP) +$dx+$dy
-  }
+  if {![info exists data(dragX)]} return
+  set dx [expr {$X - $data(dragX)}]
+  set dy [expr {$Y - $data(dragY)}]
+  wm geometry $data(WLOUP) +$dx+$dy
 }
 # ______
 
@@ -195,6 +205,7 @@ proc ::aloupe::my::DragEnd {w} {
   #   w - the loupe window's path 
 
   variable data
+  if {![info exists data(dragX)]} return
   wm withdraw $data(WLOUP)
   if {![set isfocused [string match $data(WDISP)* $data(FOCUS)]]} {
     # the disp window can be overlapped by others => it should be deiconified
@@ -213,8 +224,6 @@ proc ::aloupe::my::DragEnd {w} {
   after 50
   update   ;# enough time to hide the window and capture the image
   after 50
-  set X [expr {[winfo pointerx $w]-[winfo rootx $w]}]
-  set Y [expr {[winfo pointery $w]-[winfo rooty $w]}]
   catch {
     $data(IMAGE) copy $data(CAPTURE) \
       -from 0 0 [expr {2*$data(-size)}] [expr {2*$data(-size)}] \
@@ -222,32 +231,44 @@ proc ::aloupe::my::DragEnd {w} {
   }
   if {!$isfocused} {wm deiconify $data(WDISP)}
   wm deiconify $data(WLOUP)
+  set data(-PREVGEOM) [wm geometry $data(WLOUP)]
 }
 # ______
 
-proc ::aloupe::my::Message {args} {
-  # Displays a message, with the loupe hidden.
+proc ::aloupe::my::SizeLoupe {} {
+  # Re-displays the loupe at changing its size.
 
   variable data
-  wm withdraw $data(WLOUP)
-  tk_messageBox {*}$args
-  wm deiconify $data(WLOUP)
+  variable size
+  set data(-size) $size
+  lassign [split [winfo geometry $data(LABEL)] x+] w1
+  lassign [split $data(-PREVGEOM) x+] w2 h2 x2 y2
+  set w [expr {int(2.0*$size*$data(-zoom)*$w2/$w1)}]  ;# count the previous zoom
+  destroy $data(WLOUP)
+  CreateLoupe ${w}x${w}+$x2+$y2
 }
 # ______
 
-proc ::aloupe::my::InitGeometry {} {
+proc ::aloupe::my::InitGeometry {{geom ""}} {
   # Gets and sets the geometry of the loupe window,
   # based on the image label's sizes and the zoom factor.
+  #   geom - the predefined geometry
 
   variable data
-  lassign [split [winfo geometry $data(LABEL)] x+] w h
-  set w [expr {int($w/$data(-zoom))}]
-  set h [expr {int($h/$data(-zoom))}]
-  lassign [winfo pointerxy .] x y
-  set x [expr {$x-$w/2}]
-  set y [expr {$y-$h/2}]
-  wm geometry $data(WLOUP) ${w}x${h}+$x+$y
- }
+  if {$geom eq ""} {
+    lassign [split [winfo geometry $data(LABEL)] x+] w h
+    set w [expr {int($w/$data(-zoom))}]
+    set h [expr {int($h/$data(-zoom))}]
+    lassign [winfo pointerxy .] x y
+    set x [expr {$x-$w/2}]
+    set y [expr {$y-$h/2}]
+    set geom ${w}x${h}+$x+$y
+    if {$w>0 && $h>0 && $x>-$w && $y>-$h} {
+      set data(-PREVGEOM) $geom
+    }
+  }
+  wm geometry $data(WLOUP) $geom
+}
 # ______
 
 proc ::aloupe::my::SaveGeometry {} {
@@ -334,7 +355,7 @@ proc ::aloupe::my::InvertBg {r g b} {
   #  r - red component
   #  g - green component
   #  b - blue component
-  # Returns: {R G B} list of inverted colors.
+  # Returns {R G B} list of inverted colors.
 
   set c [expr {$r<100 && $g<100 || $r<100 && $b<100 || $b<100 && $g<100 ||
     ($r+$g+$b)<300 ? 255 : 0}]
@@ -346,7 +367,7 @@ proc ::aloupe::my::HandleColor {{doclb yes}} {
   # Processes the image color under the mouse pointer,
   # optionally saving it to the clipboard.
   #   doclb - if 'yes', means "put the color into the clipboard"
-  # Returns: 'yes' if the color was chosen.
+  # Returns 'yes' if the color was chosen.
 
   variable data
   set res no
@@ -396,8 +417,8 @@ proc ::aloupe::my::Save {} {
   wm withdraw $data(WLOUP)
   set filetypes { {"PNG Images" .png} {"All Image Files" {.png .gif}} }
   catch {::apave::obj themeExternal "$data(WLOUP)*"}  ;# theme the file chooser
-  set file [tk_getSaveFile \
-    -parent $data(WDISP) -title "Save the Loupe" -filetypes $filetypes]
+  set file [tk_getSaveFile -parent $data(WDISP) \
+    -title [::msgcat::mc "Save the Loupe"] -filetypes $filetypes]
   if {$file ne ""} {
     if {![regexp -nocase {\.(png|gif)$} $file -> ext]} {
       set ext "png"

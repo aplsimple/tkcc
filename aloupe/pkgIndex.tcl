@@ -1,5 +1,5 @@
 
-package ifneeded aloupe 0.6 [list source [file join $dir aloupe.tcl]]
+package ifneeded aloupe 0.7 [list source [file join $dir aloupe.tcl]]
 
 
 # A short intro (for Ruff! docs generator:)
@@ -7,7 +7,12 @@ package ifneeded aloupe 0.6 [list source [file join $dir aloupe.tcl]]
 namespace eval aloupe {
 
   set _ruff_preamble {
-The *aloupe* is a Tcl/Tk small package of widget / utility allowing to view the screen through a loupe. It allows also 1) to make screenshots of magnified images and 2) to pick a color from the images.
+The *aloupe* is a Tcl/Tk small widget / utility allowing to view the screen through a loupe.
+
+It allows also
+
+  * to make screenshots of magnified images
+  * to pick a color from the images.
 
 It is inspired by the Tcl/Tk wiki pages:
  
@@ -17,7 +22,7 @@ It is inspired by the Tcl/Tk wiki pages:
 
 It looks like this:
 
-<img src="files/aloupe.png" class="media" alt="">
+<img src="https://aplsimple.github.io/en/tcl/aloupe/files/aloupe.png" class="media" alt="">
 
 ## Usage
 
@@ -44,9 +49,9 @@ To change a size/zoom of the loupe, use the appropriate spinboxes. After changin
 
 To save the magnified image, use *Save* button.
 
-The *Clipboard* button displays a current pixel's color at clicking the image. When hit, the button puts the color into the clipboard.
+The *To clipboard* button displays a current pixel's color at clicking the image. When hit, the button puts the color into the clipboard.
 
-The `-command` option may be passed to `::aloupe::run` which will run the passed command at pressing the *Clipboard* button. The command may contain `%c` wildcard meaning the color value. Just to test, try and set `-command "puts %c"` option.
+The `-command` option may be passed to `::aloupe::run` which will run the passed command at pressing the *To clipboard* button. The command may contain `%c` wildcard meaning the color value. Just to test, try and set `-command "puts %c"` option.
 
 ## Options
 
@@ -62,7 +67,7 @@ The *aloupe* can be run with the options:
 Some options can be used at running *aloupe* from a Tcl code:
 
   * `-exit` - is *false* which means "don't finish Tcl/Tk session, just close the loupe"
-  * `-command` - a command to be run at pressing the *Clipboard* button
+  * `-command` - a command to be run at pressing the *To clipboard* button
   * `-parent` - a parent window's path (when the parent closes, its *aloupe* children do too)
 
 From a Tcl code, *aloupe* is run this way:
@@ -76,7 +81,7 @@ From a Tcl code, *aloupe* is run this way:
 
   * [Source](https://chiselapp.com/user/aplsimple/repository/aloupe/download) (aloupe.zip)
 
-  * [aloupe executables](https://github.com/aplsimple/aloupe/releases) for Linux / Windows
+  * [Demo and executables](https://github.com/aplsimple/aloupe/releases) for Linux / Windows
 
 ## License
  
