@@ -19,7 +19,7 @@ package require treectrl
 package require Img
 ::msgcat::mcload [file join [file dirname [info script]] msgs]
 
-package provide aloupe 0.7
+package provide aloupe 0.8.2
 
 # _______________________________________________________________________ #
 
@@ -35,7 +35,7 @@ namespace eval ::aloupe {
       -background #ff40ff \
       -exit yes \
       -command "" \
-      -ontop no \
+      -ontop yes \
       -geometry "" \
       -parent "" \
     ]
@@ -59,7 +59,7 @@ proc ::aloupe::my::Message {args} {
 
   variable data
   wm withdraw $data(WLOUP)
-  tk_messageBox {*}$args
+  tk_messageBox -parent $data(WDISP) -type ok {*}$args
   wm deiconify $data(WLOUP)
 }
 # ______
@@ -119,7 +119,6 @@ proc ::aloupe::my::CreateLoupe {{geom ""}} {
   frame $data(WLOUP)
   wm manage $data(WLOUP)
   wm withdraw $data(WLOUP)
-  wm attributes $data(WLOUP) -topmost 1 -alpha $data(-alpha)
   wm overrideredirect $data(WLOUP) 1
   set canvas $data(WLOUP).c
   canvas $canvas -width 100 -height 100 -background $data(-background) \
@@ -132,6 +131,7 @@ proc ::aloupe::my::CreateLoupe {{geom ""}} {
   after 50 "
     ::aloupe::my::InitGeometry $geom
     wm deiconify $data(WLOUP)
+    wm attributes $data(WLOUP) -topmost 1 -alpha $data(-alpha)
     "
 }
 # ______
@@ -166,6 +166,7 @@ proc ::aloupe::my::DragStart {w X Y} {
   variable size
   variable zoom
   set data(FOCUS) [focus]
+  focus -force $data(WDISP)
   set data(-size) $size
   set data(-zoom) $zoom
   if {$data(PREVZOOM) != $data(-zoom) || $data(PREVSIZE) != $data(-size)} {
@@ -207,7 +208,8 @@ proc ::aloupe::my::DragEnd {w} {
   variable data
   if {![info exists data(dragX)]} return
   wm withdraw $data(WLOUP)
-  if {![set isfocused [string match $data(WDISP)* $data(FOCUS)]]} {
+  if {!$data(-ontop) && ![string match $data(WDISP)* $data(FOCUS)] &&
+  $::tcl_platform(platform) eq "unix"} {
     # the disp window can be overlapped by others => it should be deiconified
     wm withdraw $data(WDISP)
   }
@@ -229,8 +231,9 @@ proc ::aloupe::my::DragEnd {w} {
       -from 0 0 [expr {2*$data(-size)}] [expr {2*$data(-size)}] \
       -to 0 0 $data(IMSIZE) $data(IMSIZE) -zoom $data(-zoom)
   }
-  if {!$isfocused} {wm deiconify $data(WDISP)}
+  wm deiconify $data(WDISP)
   wm deiconify $data(WLOUP)
+  focus -force $data(WDISP).but2
   set data(-PREVGEOM) [wm geometry $data(WLOUP)]
 }
 # ______
@@ -328,6 +331,11 @@ proc ::aloupe::my::Button2Click {} {
   # Processes the click on 'Clipboard' button.
 
   variable data
+  if {$data(COLOR) ne ""} {
+    StyleButton2 yes -background $data(INVCOLOR) -foreground $data(COLOR)
+    update idletasks
+    after 60 ;# just to make the click visible
+  }
   if {[HandleColor] && !$data(-exit) && $data(-command) ne ""} {
     SaveGeometry
     {*}[string map [list %c $data(COLOR)] $data(-command)]
@@ -340,8 +348,7 @@ proc ::aloupe::my::IsCapture {} {
 
   variable data
   if {$data(CAPTURE) eq ""} {
-    Message -title "Color of Image" \
-      -parent $data(WDISP) -icon warning -type ok \
+    Message -title "Color of Image" -icon warning \
       -message "Click, then drag and drop\nthe loupe to get the image."
     return no
   }
@@ -373,8 +380,7 @@ proc ::aloupe::my::HandleColor {{doclb yes}} {
   set res no
   if {[IsCapture]} {
     if {$data(COLOR) eq ""} {
-      Message -title "Color of Image" \
-        -parent $data(WDISP) -icon warning -type ok \
+      Message -title "Color of Image" -icon warning \
         -message "Click the magnified image\nto get a pixel's color.\n\nThen hit this button."
     } else {
       if {$doclb} {
@@ -425,8 +431,7 @@ proc ::aloupe::my::Save {} {
       append file ".${ext}"
     }
     if {[catch {$data(IMAGE) write $file -format [string tolower $ext]} err]} {
-      Message -title "Error Writing File" \
-        -parent $data(WDISP) -icon error -type ok \
+      Message -title "Error Writing File" -icon error \
         -message "Error writing to file \"$file\":\n$err"
     }
   }
@@ -483,7 +488,7 @@ proc ::aloupe::run {args} {
     } else {
       puts "Bad option: $a \"$v\""
       my::Synopsis
-      Exit
+      my::Exit
       return
     }
   }
@@ -503,5 +508,5 @@ if {[info exist ::argv0] && [file normalize $::argv0] eq [file normalize [info s
   ::aloupe::run {*}$::argv
 }
 # _________________________________ EOF _________________________________ #
-#-ARGS1: -size 20 -zoom 10 -alpha .2 -background "yellow"
+#ARGS1: -size 20 -zoom 10 -alpha .2 -background "yellow" -ontop 0
 #-RUNF1: ~/PG/github/pave/tests/test2_pave.tcl 23 9 12 "small icons"
