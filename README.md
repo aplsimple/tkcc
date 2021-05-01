@@ -24,6 +24,8 @@ The changes to *tk_chooseColor* are the following:
 
 9. A *aloupe* package may be called to pick a color from the screen loupe.
 
+10. A reverse color is shown in the color display. After clicking the display, a new color is displayed.
+
 To use *clrpick.tcl*, copy it into the Tk directory (replacing the old version).
 
 A stand-alone Tk color chooser is invoked as:
