@@ -18,13 +18,15 @@ The changes to *tk_chooseColor* are the following:
 
 6. The *-moveall* (0 by defauls) and *-tonemoves* (1 by default) options are added.
 
-7. The chooser is themed now.
+7. The *-geometry* option is added, in two forms: +X+Y (coordinates) or pointer+x+y (shift from the mouse pointer).
 
-8. A stand-alone Tk color chooser *tkclr.tcl* is available.
+8. The chooser is themed now.
 
-9. A *aloupe* package may be called to pick a color from the screen loupe.
+9. A stand-alone Tk color chooser *tkclr.tcl* is available.
 
-10. A reverse color is shown in the color display. After clicking the display, a new color is displayed.
+10. A *aloupe* package may be called to pick a color from the screen loupe.
+
+11. A reverse color is shown in the color display. After clicking the display, a new color is displayed.
 
 To use *clrpick.tcl*, copy it into the Tk directory (replacing the old version).
 
