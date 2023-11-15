@@ -281,20 +281,19 @@ proc ::tk::dialog::color::BuildDialog {w} {
   set mainentry ::tk::dialog::color::[winfo name $w](selection)
 
   # for setting the mutual move of selectors:
+  set data(cbc2) grey
   set ::tk::dialog::color::tonemoves $data(-tonemoves)
   set ::tk::dialog::color::moveall $data(-moveall)
-  pack [ttk::checkbutton $stripsFrame.moveallColorSel -text [mc "Move all"] \
+  pack [ttk::checkbutton $stripsFrame.moveallColorSel -text "[mc {Move all}]    " \
     -variable ::tk::dialog::color::moveall -command \
     "::tk::dialog::color::StickSelectors $w 1"] -padx 2 -side left
-  pack [ttk::checkbutton $stripsFrame.followColorSel -text [mc "Tone moves"] \
-    -variable ::tk::dialog::color::tonemoves] -padx 20 -side left
   set foc [ttk::frame $stripsFrame.foc]
   foreach l { 804000 004000 004080 008080 800080 808000 \
               ffff00 ff00ff 00ffff 0000ff 00ff00 ff0000} {
-    set fl [frame $stripsFrame.foc.$l -bd 3 -relief raised -height 14 -width 14]
+    set fl [frame $stripsFrame.foc.$l -bd 3 -relief raised -height 24 -width 24]
     $fl configure -bg #$l
     bind $fl <Button-1> [list tk::dialog::color::LittleSwatch $w $mainentry #$l]
-    pack $fl -expand yes -anchor nw -fill both -padx 3 -side left
+    pack $fl -expand yes -anchor nw -padx 3 -side left
   }
   pack $foc -expand yes -anchor nw -fill both -pady 4 -side right
 
@@ -307,7 +306,7 @@ proc ::tk::dialog::color::BuildDialog {w} {
   set lab [ttk::label $selFrame.lab -text [mc "Selection:"]]
   set ent [ttk::entry $selFrame.ent -textvariable $mainentry -width 14]
   set f1  [ttk::frame $selFrame.f1 -relief sunken]
-  set data(finalCanvas) [label $f1.demo -bd 1 -width 10 -height 7]
+  set data(finalCanvas) [label $f1.demo -bd 1 -width 10 -height 6]
 
   pack $lab -side top -padx 4 -anchor sw
   pack $ent -side top -padx 4 -pady 2 -anchor n
@@ -514,6 +513,7 @@ proc ::tk::dialog::color::CreateSelector {w sel c } {
     $data(indent) 0]
   set data($c,x) [RgbToX $w $data($c,intensity)]
   $sel move $data($c,index) $data($c,x) 0
+  LeaveColorBar $w $c
 }
 
 # Inverts colors from light to dark and vice versa to get "fg" from "bg".
@@ -526,7 +526,12 @@ proc ::tk::dialog::color::CreateSelector {w sel c } {
 proc ::tk::dialog::color::InvertBg {r g b} {
   set c [expr {$r<100 && $g<100 || $r<100 && $b<100 || $b<100 && $g<100 ||
     ($r+$g+$b)<300 ? 255 : 0}]
-  return [string toupper [format "#%02x%02x%02x" $c $c $c]]
+  set res [string toupper [format "#%02x%02x%02x" $c $c $c]]
+  switch -exact $res {
+    {#000000} {set res black}
+    {#FFFFFF} {set res white}
+  }
+  return $res
 }
 
 proc ::tk::dialog::color::ReverseFinalFg {w} {
@@ -786,7 +791,7 @@ proc ::tk::dialog::color::EnterColorBar {w color} {
 #
 proc ::tk::dialog::color::LeaveColorBar {w color} {
   upvar ::tk::dialog::color::[winfo name $w] data
-  $data($color,sel) itemconfigure $data($color,index) -fill black
+  $data($color,sel) itemconfigure $data($color,index) -fill $data(cbc2)
 }
 
 # user hits "Loupe" button
